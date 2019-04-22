@@ -31,9 +31,9 @@ class dir_monitor_impl :
 public:
     dir_monitor_impl()
         : fd_(init_fd()),
-        stream_descriptor_(inotify_io_service_, fd_),
-        inotify_work_(new boost::asio::io_service::work(inotify_io_service_)),
-        inotify_work_thread_(boost::bind(&boost::asio::io_service::run, &inotify_io_service_)),
+        stream_descriptor_(inotify_io_context_, fd_),
+        inotify_work_(new boost::asio::io_context::work(inotify_io_context_)),
+        inotify_work_thread_(boost::bind(&boost::asio::io_context::run, &inotify_io_context_)),
         run_(true)
     {
     }
@@ -65,7 +65,7 @@ public:
     void destroy()
     {
         inotify_work_.reset();
-        inotify_io_service_.stop();
+        inotify_io_context_.stop();
         inotify_work_thread_.join();
 
         boost::unique_lock<boost::mutex> lock(events_mutex_);
@@ -158,9 +158,9 @@ private:
     }
 
     int fd_;
-    boost::asio::io_service inotify_io_service_;
+    boost::asio::io_context inotify_io_context_;
     boost::asio::posix::stream_descriptor stream_descriptor_;
-    boost::scoped_ptr<boost::asio::io_service::work> inotify_work_;
+    boost::scoped_ptr<boost::asio::io_context::work> inotify_work_;
     boost::thread inotify_work_thread_;
     boost::array<char, 4096> read_buffer_;
     std::string pending_read_buffer_;
